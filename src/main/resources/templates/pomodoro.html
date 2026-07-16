@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('番茄钟 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('pomodoro')}"></div>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row g-4">
+        <!-- 左侧：计时器 -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0 me-4 fw-bold">🍅 番茄专注</h5>
+                        <ul class="nav nav-pills nav-sm" id="timerTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active py-1 px-3" id="pomodoro-tab" data-bs-toggle="pill"
+                                        data-bs-target="#pomodoro-pane" type="button" role="tab">番茄计时</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-1 px-3" id="stopwatch-tab" data-bs-toggle="pill"
+                                        data-bs-target="#stopwatch-pane" type="button" role="tab">正计时</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="timerTabContent">
+                        <!-- 番茄计时 -->
+                        <div class="tab-pane fade show active" id="pomodoro-pane" role="tabpanel">
+                            <div class="timer-wrapper">
+                                <svg class="timer-ring" viewBox="0 0 260 260">
+                                    <circle class="timer-track" cx="130" cy="130" r="120"></circle>
+                                    <circle class="timer-progress" id="pomo-progress" cx="130" cy="130" r="120"></circle>
+                                </svg>
+                                <div class="timer-text" id="pomo-display">25:00</div>
+                                <div class="timer-label" id="pomo-label">专注</div>
+                            </div>
+
+                            <div class="row justify-content-center g-3 mt-2">
+                                <div class="col-auto">
+                                    <div class="input-group input-group-sm" style="width: 160px;">
+                                        <span class="input-group-text">时长</span>
+                                        <input type="number" class="form-control" id="pomo-minutes" value="25" min="1" max="180">
+                                        <span class="input-group-text">分</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control form-control-sm" id="pomo-tag" placeholder="标签，如 coding / reading">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control form-control-sm" id="pomo-note" placeholder="备注（可选）">
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-2 mt-4">
+                                <button class="btn btn-primary px-4" id="pomo-start" onclick="pomoStart()">开始</button>
+                                <button class="btn btn-outline-secondary px-4" id="pomo-pause" onclick="pomoPause()" style="display:none">暂停</button>
+                                <button class="btn btn-outline-danger px-4" id="pomo-stop" onclick="pomoStop()" style="display:none">结束</button>
+                                <button class="btn btn-outline-secondary px-4" id="pomo-reset" onclick="pomoReset()">重置</button>
+                            </div>
+                        </div>
+
+                        <!-- 正计时 -->
+                        <div class="tab-pane fade" id="stopwatch-pane" role="tabpanel">
+                            <div class="timer-wrapper">
+                                <svg class="timer-ring" viewBox="0 0 260 260">
+                                    <circle class="timer-track" cx="130" cy="130" r="120"></circle>
+                                    <circle class="timer-progress" id="stopwatch-progress" cx="130" cy="130" r="120"></circle>
+                                </svg>
+                                <div class="timer-text" id="stopwatch-display">00:00</div>
+                                <div class="timer-label" id="stopwatch-label">专注</div>
+                            </div>
+
+                            <div class="row justify-content-center g-3 mt-2">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control form-control-sm" id="sw-tag" placeholder="标签，如 coding / reading">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control form-control-sm" id="sw-note" placeholder="备注（可选）">
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-2 mt-4">
+                                <button class="btn btn-primary px-4" id="sw-start" onclick="swStart()">开始</button>
+                                <button class="btn btn-outline-secondary px-4" id="sw-pause" onclick="swPause()" style="display:none">暂停</button>
+                                <button class="btn btn-outline-danger px-4" id="sw-stop" onclick="swStop()" style="display:none">结束</button>
+                                <button class="btn btn-outline-secondary px-4" id="sw-reset" onclick="swReset()">重置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：概览 + 专注记录 -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white fw-bold">概览</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">今日番茄</div>
+                                <div class="stat-value" id="stat-today-count">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">今日专注时长</div>
+                                <div class="stat-value" id="stat-today-duration">0m</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">总番茄</div>
+                                <div class="stat-value" id="stat-total-count">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-label">总专注时长</div>
+                                <div class="stat-value" id="stat-total-duration">0m</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                    <span>专注记录</span>
+                </div>
+                <div class="card-body" id="history-list">
+                    <div class="text-muted text-center py-3">暂无记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-sm .nav-link {
+        font-size: .85rem;
+        color: #6c757d;
+    }
+    .nav-sm .nav-link.active {
+        background-color: #e9ecef;
+        color: #212529;
+        font-weight: 500;
+    }
+    .timer-wrapper {
+        position: relative;
+        width: 260px;
+        height: 260px;
+        margin: 24px auto 0;
+    }
+    .timer-ring {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    .timer-ring circle {
+        fill: none;
+        stroke-width: 14;
+        stroke-linecap: round;
+    }
+    .timer-track { stroke: #f1f3f5; }
+    .timer-progress {
+        stroke: #3b82f6;
+        stroke-dasharray: 754;
+        stroke-dashoffset: 754;
+        transition: stroke-dashoffset 0.35s ease-out;
+        filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.45));
+    }
+    .timer-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -55%);
+        font-size: 3.2rem;
+        font-weight: 500;
+        font-family: 'Segoe UI', system-ui, monospace;
+        color: #212529;
+    }
+    .timer-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, 70%);
+        font-size: .9rem;
+        color: #6c757d;
+    }
+    .stat-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+    }
+    .stat-label {
+        font-size: .85rem;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #212529;
+    }
+    .stat-value small { font-size: .55em; font-weight: 400; color: #6c757d; }
+    .history-date {
+        font-size: .85rem;
+        color: #6c757d;
+        margin: 14px 0 6px;
+    }
+    .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-dot {
+        width: 8px;
+        height: 8px;
+        background: #0d6efd;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    .history-time { color: #495057; font-size: .9rem; }
+    .history-duration { color: #6c757d; font-size: .85rem; }
+</style>
+
+<script>
+    const CIRCUMFERENCE = 2 * Math.PI * 120; // ~754
+
+    // 番茄计时
+    let pomoTotal = 25 * 60, pomoRemaining = 25 * 60, pomoRunning = false, pomoTimer = null, pomoStartAt = null;
+    // 正计时
+    let swElapsed = 0, swRunning = false, swTimer = null, swStartAt = null;
+
+    function fmtSec(s) {
+        const m = Math.floor(Math.abs(s) / 60), sec = Math.abs(s) % 60;
+        return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+    }
+
+    function fmtDuration(s) {
+        if (!s) return '0m';
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+        return (h ? h + 'h' : '') + (m ? m + 'm' : (h ? '' : '0m'));
+    }
+
+    function fmtDate(d) {
+        const now = new Date();
+        const t = toDate(d);
+        const isToday = t.getFullYear() === now.getFullYear() && t.getMonth() === now.getMonth() && t.getDate() === now.getDate();
+        const isYest = new Date(now.getTime() - 86400000);
+        const isYesterday = t.getFullYear() === isYest.getFullYear() && t.getMonth() === isYest.getMonth() && t.getDate() === isYest.getDate();
+        if (isToday) return '今天';
+        if (isYesterday) return '昨天';
+        return (t.getMonth() + 1) + '月' + t.getDate() + '日';
+    }
+
+    function fmtHM(d) {
+        const t = toDate(d);
+        return String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+    }
+
+    /** 兼容后端返回的 "yyyy-MM-dd HH:mm:ss" 字符串，转为可解析的 Date */
+    function toDate(d) {
+        if (typeof d === 'string') {
+            return new Date(d.replace(' ', 'T'));
+        }
+        return new Date(d);
+    }
+
+    function setProgress(id, remaining, total) {
+        const ratio = total > 0 ? remaining / total : 0;
+        const offset = ratio * CIRCUMFERENCE; // 剩余越多，蓝色越少；剩余为 0 时全蓝
+        $('#' + id).css('stroke-dashoffset', offset);
+    }
+
+    // ---------- 番茄计时 ----------
+    function updatePomoDisplay() {
+        $('#pomo-display').text(fmtSec(pomoRemaining));
+        setProgress('pomo-progress', pomoRemaining, pomoTotal);
+    }
+
+    function pomoStart() {
+        if (pomoRunning) return;
+        const mins = parseInt($('#pomo-minutes').val(), 10) || 25;
+        if (!pomoStartAt) {
+            pomoTotal = Math.min(Math.max(mins, 1), 180) * 60;
+            pomoRemaining = pomoTotal;
+        }
+        pomoRunning = true;
+        pomoStartAt = pomoStartAt || new Date();
+        $('#pomo-start').hide();
+        $('#pomo-pause').show();
+        $('#pomo-stop').show();
+        $('#pomo-minutes').prop('disabled', true);
+        pomoTimer = setInterval(() => {
+            pomoRemaining--;
+            updatePomoDisplay();
+            if (pomoRemaining <= 0) {
+                pomoFinish(true);
+            }
+        }, 1000);
+    }
+
+    function pomoPause() {
+        if (!pomoRunning) return;
+        pomoRunning = false;
+        clearInterval(pomoTimer);
+        $('#pomo-start').show().text('继续');
+        $('#pomo-pause').hide();
+    }
+
+    function pomoStop() {
+        pomoFinish(false);
+    }
+
+    function pomoFinish(auto) {
+        pomoRunning = false;
+        clearInterval(pomoTimer);
+        const end = new Date();
+        // 自动倒计时完成 -> 记录「本次设置的时长」(pomoTotal)；手动结束 -> 记录实际已过时长
+        const duration = auto ? pomoTotal : (pomoTotal - pomoRemaining);
+        const start = new Date(end.getTime() - duration * 1000);
+        if (duration > 0) {
+            saveRecord($('#pomo-tag').val(), $('#pomo-note').val(), duration, start, end);
+        }
+        pomoReset();
+        if (auto) alert('🎉 专注完成！');
+    }
+
+    function pomoReset() {
+        pomoRunning = false;
+        clearInterval(pomoTimer);
+        pomoStartAt = null;
+        const mins = parseInt($('#pomo-minutes').val(), 10) || 25;
+        pomoTotal = Math.min(Math.max(mins, 1), 180) * 60;
+        pomoRemaining = pomoTotal;
+        updatePomoDisplay();
+        $('#pomo-start').show().text('开始');
+        $('#pomo-pause').hide();
+        $('#pomo-stop').hide();
+        $('#pomo-minutes').prop('disabled', false);
+    }
+
+    $('#pomo-minutes').on('change input', function () {
+        if (!pomoRunning && !pomoStartAt) pomoReset();
+    });
+
+    // ---------- 正计时 ----------
+    function updateSwDisplay() {
+        $('#stopwatch-display').text(fmtSec(swElapsed));
+        // 正计时进度：以 60 分钟为一个圆环周期，循环显示
+        setProgress('stopwatch-progress', 3600 - (swElapsed % 3600), 3600);
+    }
+
+    function swStart() {
+        if (swRunning) return;
+        swRunning = true;
+        swStartAt = swStartAt || new Date(new Date().getTime() - swElapsed * 1000);
+        $('#sw-start').hide();
+        $('#sw-pause').show();
+        $('#sw-stop').show();
+        swTimer = setInterval(() => {
+            swElapsed++;
+            updateSwDisplay();
+        }, 1000);
+    }
+
+    function swPause() {
+        if (!swRunning) return;
+        swRunning = false;
+        clearInterval(swTimer);
+        $('#sw-start').show().text('继续');
+        $('#sw-pause').hide();
+    }
+
+    function swStop() {
+        swRunning = false;
+        clearInterval(swTimer);
+        const end = new Date();
+        const start = new Date(end.getTime() - swElapsed * 1000);
+        if (swElapsed > 0) {
+            saveRecord($('#sw-tag').val(), $('#sw-note').val(), swElapsed, start, end);
+        }
+        swReset();
+    }
+
+    function swReset() {
+        swRunning = false;
+        clearInterval(swTimer);
+        swStartAt = null;
+        swElapsed = 0;
+        updateSwDisplay();
+        $('#sw-start').show().text('开始');
+        $('#sw-pause').hide();
+        $('#sw-stop').hide();
+    }
+
+    // ---------- 通用保存与数据加载 ----------
+    function saveRecord(tag, note, duration, start, end) {
+        const payload = {
+            tag: tag || '专注',
+            duration: duration,
+            note: note || '',
+            startTime: start.getTime(),
+            endTime: end.getTime()
+        };
+        $.ajax({
+            url: '/api/pomodoros',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload)
+        }).done(function () {
+            loadData();
+        }).fail(function (xhr) {
+            console.error('保存专注记录失败', xhr.responseText);
+            let msg = '保存失败';
+            try {
+                const body = JSON.parse(xhr.responseText);
+                if (body && body.message) msg = msg + '：' + body.message;
+            } catch (e) { /* ignore */ }
+            alert(msg);
+        });
+    }
+
+    function loadData() {
+        $.get('/api/pomodoros/stats', function (res) {
+            $('#stat-today-count').text(res.data.todayCount || 0);
+            $('#stat-today-duration').text(fmtDuration(res.data.todaySeconds || 0));
+            $('#stat-total-count').text(res.data.totalCount || 0);
+            $('#stat-total-duration').text(fmtDuration(res.data.totalSeconds || 0));
+        });
+
+        $.get('/api/pomodoros', function (res) {
+            const list = res.data || [];
+            const container = $('#history-list');
+            if (!list.length) {
+                container.html('<div class="text-muted text-center py-3">暂无记录</div>');
+                return;
+            }
+            // 按日期分组
+            const groups = {};
+            list.forEach(p => {
+                const key = fmtDate(p.startTime);
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+            });
+            let html = '';
+            Object.keys(groups).forEach(date => {
+                html += `<div class="history-date">${esc(date)}</div>`;
+                groups[date].forEach(p => {
+                    const start = p.startTime ? fmtHM(p.startTime) : '-';
+                    const end = p.endTime ? fmtHM(p.endTime) : '-';
+                    html += `<div class="history-item">
+                        <div><span class="history-dot"></span><span class="history-time">${start} - ${end}</span></div>
+                        <div class="history-duration">${esc(p.tag || '专注')} · ${fmtDuration(p.duration)}</div>
+                    </div>`;
+                });
+            });
+            container.html(html);
+        });
+    }
+
+    function esc(s) {
+        return (s || '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+    }
+
+    $(function () {
+        updatePomoDisplay();
+        updateSwDisplay();
+        loadData();
+
+        // 切换标签页时重置状态，避免两个计时器同时运行
+        $('#timerTabs button').on('shown.bs.tab', function (e) {
+            pomoReset();
+            swReset();
+        });
+    });
+</script>
+</body>
+</html>

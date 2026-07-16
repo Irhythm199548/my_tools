@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('格式转换 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('convert')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">🔄 格式转换</h4>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-3">
+                <div class="card-header fw-bold">Unix 时间戳</div>
+                <div class="card-body">
+                    <div class="input-group mb-2" style="max-width:360px">
+                        <span class="input-group-text">时区</span>
+                        <input class="form-control" id="tz" value="Asia/Shanghai">
+                    </div>
+                    <button class="btn btn-primary mb-2" onclick="nowTs()">获取当前时间</button>
+                    <pre class="result" id="now-out">-</pre>
+
+                    <hr>
+                    <h6>时间戳 → 日期</h6>
+                    <div class="input-group mb-2">
+                        <input class="form-control" id="ts-val" placeholder="时间戳（秒或毫秒）">
+                        <div class="input-group-text"><input class="form-check-input mt-0" type="checkbox" id="ts-millis"> 毫秒</div>
+                    </div>
+                    <button class="btn btn-outline-primary mb-2" onclick="tsToDate()">转换</button>
+                    <pre class="result" id="ts-out">-</pre>
+
+                    <hr>
+                    <h6>日期 → 时间戳</h6>
+                    <input class="form-control mb-2" id="date-str" placeholder="如 2026-07-15 15:30:00">
+                    <input class="form-control mb-2" id="date-pattern" value="yyyy-MM-dd HH:mm:ss">
+                    <button class="btn btn-outline-primary mb-2" onclick="dateToTs()">转换</button>
+                    <pre class="result" id="date-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header fw-bold">图片转 Base64</div>
+                <div class="card-body">
+                    <input type="file" class="form-control mb-2" id="img-file" accept="image/*">
+                    <button class="btn btn-primary mb-2" onclick="imgToB64()">转换</button>
+                    <div id="img-result" class="text-center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function nowTs() {
+        $.get('/api/convert/timestamp/now', { timeZone: $('#tz').val() }, r => {
+            const d = r.data;
+            $('#now-out').text(`epochMillis: ${d.epochMillis}\nepochSeconds: ${d.epochSeconds}\nformatted: ${d.formatted}\ntimeZone: ${d.timeZone}`);
+        });
+    }
+    function tsToDate() {
+        const ts = $('#ts-val').val();
+        if (!ts) { alert('请输入时间戳'); return; }
+        $.post('/api/convert/timestamp/toDate', { timestamp: ts, millis: $('#ts-millis').is(':checked'), timeZone: $('#tz').val() }, r => {
+            const d = r.data;
+            $('#ts-out').text(`epochMillis: ${d.epochMillis}\nepochSeconds: ${d.epochSeconds}\nformatted: ${d.formatted}`);
+        }).fail(e => alert('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
+    }
+    function dateToTs() {
+        $.post('/api/convert/timestamp/fromDate', { dateStr: $('#date-str').val(), pattern: $('#date-pattern').val(), timeZone: $('#tz').val() }, r => {
+            $('#date-out').text('epochMillis: ' + r.data);
+        }).fail(e => alert('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
+    }
+    function imgToB64() {
+        const f = $('#img-file')[0].files[0];
+        if (!f) { alert('请选择图片'); return; }
+        const fd = new FormData();
+        fd.append('file', f);
+        $.ajax({ url: '/api/convert/image', method: 'POST', data: fd, processData: false, contentType: false })
+            .done(r => $('#img-result').html(`<img src="${r.data}" class="img-fluid border" style="max-height:300px"><div class="mt-2"><textarea class="form-control" rows="3">${r.data}</textarea></div>`))
+            .fail(e => alert('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
+    }
+</script>
+</body>
+</html>

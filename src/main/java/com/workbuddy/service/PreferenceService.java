@@ -1,0 +1,51 @@
+package com.workbuddy.service;
+
+import com.workbuddy.entity.UserPreference;
+import com.workbuddy.repository.PreferenceRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * 用户偏好 Service（键值对：主题、默认城市等）
+ */
+@Service
+@RequiredArgsConstructor
+public class PreferenceService {
+
+    private final PreferenceRepository repository;
+
+    /** 全部偏好 */
+    public Map<String, String> all() {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (UserPreference p : repository.findAll()) {
+            map.put(p.getKey(), p.getValue());
+        }
+        return map;
+    }
+
+    public String get(String key) {
+        return repository.findByKey(key).map(UserPreference::getValue).orElse(null);
+    }
+
+    /** 设置/更新偏好（不存在则新建） */
+    @Transactional
+    public UserPreference set(String key, String value, String category, String description) {
+        Optional<UserPreference> opt = repository.findByKey(key);
+        UserPreference pref = opt.orElseGet(UserPreference::new);
+        pref.setKey(key);
+        pref.setValue(value);
+        if (category != null) pref.setCategory(category);
+        if (description != null) pref.setDescription(description);
+        return repository.save(pref);
+    }
+
+    public List<UserPreference> list() {
+        return repository.findAll();
+    }
+}

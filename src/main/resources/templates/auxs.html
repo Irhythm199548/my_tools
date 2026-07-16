@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('辅助工具 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('aux')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">🧩 辅助工具</h4>
+
+    <div class="row g-3">
+        <!-- UUID -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">UUID 生成器</div>
+                <div class="card-body">
+                    <div class="form-check form-check-inline mb-2">
+                        <input class="form-check-input" type="checkbox" id="uuid-nodash"><label class="form-check-label">无连字符</label>
+                    </div>
+                    <div class="mb-2">
+                        <button class="btn btn-primary" onclick="genUuid()">生成 1 个</button>
+                        <button class="btn btn-outline-primary" onclick="genBatch()">批量 10 个</button>
+                    </div>
+                    <pre class="result" id="uuid-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR generate -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">二维码生成</div>
+                <div class="card-body">
+                    <textarea class="form-control mb-2" id="qr-content" rows="3" placeholder="二维码内容，如 https://www.example.com"></textarea>
+                    <div class="input-group mb-2" style="max-width:280px">
+                        <span class="input-group-text">尺寸</span>
+                        <input type="number" class="form-control" id="qr-size" value="300">
+                    </div>
+                    <button class="btn btn-primary mb-2" onclick="qrGen()">生成</button>
+                    <div id="qr-img" class="text-center"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR parse -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">二维码解析</div>
+                <div class="card-body">
+                    <input type="file" class="form-control mb-2" id="qr-file" accept="image/*">
+                    <button class="btn btn-primary mb-2" onclick="qrParse()">解析</button>
+                    <pre class="result" id="qr-out">-</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function genUuid() {
+        $.get('/api/aux/uuid', { noDash: $('#uuid-nodash').is(':checked') }, r => $('#uuid-out').text(r.data));
+    }
+    function genBatch() {
+        $.get('/api/aux/uuid/batch', { count: 10 }, r => $('#uuid-out').text(r.data.join('\n')));
+    }
+    function qrGen() {
+        const content = $('#qr-content').val();
+        if (!content) { alert('请输入内容'); return; }
+        $.post('/api/aux/qrcode/generate', { content: content, width: $('#qr-size').val(), height: $('#qr-size').val() }, r => {
+            $('#qr-img').html(`<img src="${r.data}" class="img-fluid border">`);
+        }).fail(e => alert('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
+    }
+    function qrParse() {
+        const f = $('#qr-file')[0].files[0];
+        if (!f) { alert('请选择二维码图片'); return; }
+        const fd = new FormData();
+        fd.append('file', f);
+        $.ajax({ url: '/api/aux/qrcode/parse', method: 'POST', data: fd, processData: false, contentType: false })
+            .done(r => $('#qr-out').text(r.data))
+            .fail(e => $('#qr-out').text('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
+    }
+</script>
+</body>
+</html>

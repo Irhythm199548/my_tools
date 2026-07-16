@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('网络与安全 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('network')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">🌐 网络与安全</h4>
+
+    <div class="row g-3">
+        <!-- IP -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">IP 归属地查询</div>
+                <div class="card-body">
+                    <div class="input-group mb-2">
+                        <input class="form-control" id="ip" value="8.8.8.8">
+                        <button class="btn btn-primary" onclick="doIp()">查询</button>
+                    </div>
+                    <pre class="result" id="ip-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- UA -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">User-Agent 解析</div>
+                <div class="card-body">
+                    <textarea class="form-control mb-2" id="ua" rows="2" placeholder="粘贴 User-Agent"></textarea>
+                    <button class="btn btn-primary mb-2" onclick="doUa()">解析</button>
+                    <pre class="result" id="ua-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Headers -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">HTTP Header 解析</div>
+                <div class="card-body">
+                    <textarea class="form-control mb-2" id="hdr" rows="3" placeholder="Host: example.com&#10;User-Agent: ...&#10;Accept: */*"></textarea>
+                    <button class="btn btn-primary mb-2" onclick="doHeaders()">解析</button>
+                    <pre class="result" id="hdr-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">随机密码生成</div>
+                <div class="card-body">
+                    <div class="input-group mb-2" style="max-width:280px">
+                        <span class="input-group-text">长度</span>
+                        <input type="number" class="form-control" id="pw-len" value="16">
+                    </div>
+                    <div class="mb-2">
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="pw-u" checked><label class="form-check-label">大写</label></div>
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="pw-l" checked><label class="form-check-label">小写</label></div>
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="pw-d" checked><label class="form-check-label">数字</label></div>
+                        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="pw-s" checked><label class="form-check-label">特殊</label></div>
+                    </div>
+                    <button class="btn btn-primary mb-2" onclick="doPw()">生成</button>
+                    <pre class="result" id="pw-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mock -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">假数据生成（Mock）</div>
+                <div class="card-body">
+                    <div class="input-group mb-2" style="max-width:280px">
+                        <span class="input-group-text">语言</span>
+                        <select class="form-select" id="mock-locale">
+                            <option value="en">en</option><option value="zh-CN">zh-CN</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="doMock()">生成</button>
+                    </div>
+                    <pre class="result" id="mock-out">-</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Port scan -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header fw-bold">端口扫描（内网版）</div>
+                <div class="card-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><input class="form-control" id="ps-host" value="127.0.0.1" placeholder="主机"></div>
+                        <div class="col-3"><input type="number" class="form-control" id="ps-from" value="1" placeholder="起始"></div>
+                        <div class="col-3"><input type="number" class="form-control" id="ps-to" value="1024" placeholder="结束"></div>
+                    </div>
+                    <button class="btn btn-primary mb-2" id="ps-btn" onclick="doScan()">开始扫描</button>
+                    <pre class="result" id="ps-out">-</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function pf(url, data, out, fmt) {
+        $.ajax({ url: url, method: 'POST', data: data })
+            .done(r => $('#' + out).text(fmt ? fmt(r.data) : (r.data != null ? r.data : JSON.stringify(r, null, 2))))
+            .fail(r => $('#' + out).text('错误: ' + (r.responseJSON ? r.responseJSON.message : r.statusText)));
+    }
+    function doIp() { pf('/api/net/ip', { ip: $('#ip').val() }, 'ip-out', d => JSON.stringify(d, null, 2)); }
+    function doUa() { pf('/api/net/ua', { ua: $('#ua').val() }, 'ua-out', d => JSON.stringify(d, null, 2)); }
+    function doHeaders() { pf('/api/net/headers', { raw: $('#hdr').val() }, 'hdr-out', d => JSON.stringify(d, null, 2)); }
+    function doPw() {
+        pf('/api/net/password', { length: $('#pw-len').val(), upper: $('#pw-u').is(':checked'), lower: $('#pw-l').is(':checked'), digit: $('#pw-d').is(':checked'), special: $('#pw-s').is(':checked') }, 'pw-out');
+    }
+    function doMock() { pf('/api/net/mock', { locale: $('#mock-locale').val() }, 'mock-out', d => JSON.stringify(d, null, 2)); }
+    function doScan() {
+        const btn = $('#ps-btn'); btn.prop('disabled', true).text('扫描中...');
+        pf('/api/net/portscan', { host: $('#ps-host').val(), from: $('#ps-from').val(), to: $('#ps-to').val() }, 'ps-out', d => `openCount: ${d.openCount}\nopenPorts: ${JSON.stringify(d.openPorts)}`)
+            .always(() => btn.prop('disabled', false).text('开始扫描'));
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('文本处理 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('text')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">📄 文本处理</h4>
+
+    <ul class="nav nav-tabs" id="tabs">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-diff">Diff 对比</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-regex">正则测试</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-case">命名转换</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-wc">字数统计</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-conv">格式互转</button></li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- Diff -->
+        <div class="tab-pane fade show active" id="t-diff">
+            <div class="row">
+                <div class="col-md-6"><textarea class="form-control mb-2" id="d1" rows="8" placeholder="原始文本"></textarea></div>
+                <div class="col-md-6"><textarea class="form-control mb-2" id="d2" rows="8" placeholder="对比文本"></textarea></div>
+            </div>
+            <button class="btn btn-primary mb-2" onclick="doDiff()">对比</button>
+            <div id="diff-out"></div>
+        </div>
+
+        <!-- Regex -->
+        <div class="tab-pane fade" id="t-regex">
+            <input class="form-control mb-2" id="rg-pattern" placeholder="正则表达式，如 \\d+">
+            <textarea class="form-control mb-2" id="rg-text" rows="6" placeholder="待匹配文本"></textarea>
+            <button class="btn btn-primary mb-2" onclick="doRegex()">测试</button>
+            <div class="mb-2">匹配数：<b id="rg-count">0</b></div>
+            <div class="card mb-2"><div class="card-header">高亮结果</div><div class="card-body" id="rg-hl"></div></div>
+            <div class="card"><div class="card-header">匹配项</div><div class="card-body"><pre class="result" id="rg-matches"></pre></div></div>
+        </div>
+
+        <!-- Case -->
+        <div class="tab-pane fade" id="t-case">
+            <div class="input-group mb-2" style="max-width:360px">
+                <select class="form-select" id="case-target">
+                    <option value="camel">驼峰 camelCase</option>
+                    <option value="pascal">帕斯卡 PascalCase</option>
+                    <option value="snake">下划线 snake_case</option>
+                    <option value="kebab">短横线 kebab-case</option>
+                </select>
+                <button class="btn btn-primary" onclick="doCase()">转换</button>
+            </div>
+            <input class="form-control mb-2" id="case-in" placeholder="输入，如 my_test_field">
+            <pre class="result" id="case-out"></pre>
+        </div>
+
+        <!-- WordCount -->
+        <div class="tab-pane fade" id="t-wc">
+            <textarea class="form-control mb-2" id="wc-in" rows="6" placeholder="输入文本"></textarea>
+            <button class="btn btn-primary mb-2" onclick="doWc()">统计</button>
+            <table class="table table-bordered bg-white" style="max-width:420px">
+                <tbody id="wc-out"></tbody>
+            </table>
+        </div>
+
+        <!-- Convert -->
+        <div class="tab-pane fade" id="t-conv">
+            <div class="row g-2 mb-2" style="max-width:420px">
+                <div class="col-5"><select class="form-select" id="conv-from">
+                    <option value="yaml">YAML</option><option value="json">JSON</option><option value="properties">Properties</option>
+                </select></div>
+                <div class="col-2 text-center pt-2">→</div>
+                <div class="col-5"><select class="form-select" id="conv-to">
+                    <option value="json">JSON</option><option value="yaml">YAML</option><option value="properties">Properties</option>
+                </select></div>
+            </div>
+            <textarea class="form-control mb-2" id="conv-in" rows="8" placeholder="输入内容"></textarea>
+            <button class="btn btn-primary mb-2" onclick="doConv()">转换</button>
+            <pre class="result" id="conv-out"></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    function postForm(url, data, cb) {
+        $.ajax({ url: url, method: 'POST', data: data })
+            .done(r => cb(r))
+            .fail(r => alert('错误: ' + (r.responseJSON ? r.responseJSON.message : r.statusText)));
+    }
+    function doDiff() { postForm('/api/text/diff', { text1: $('#d1').val(), text2: $('#d2').val() }, r => $('#diff-out').html(r.data)); }
+    function doRegex() {
+        postForm('/api/text/regex', { pattern: $('#rg-pattern').val(), text: $('#rg-text').val() }, r => {
+            if (!r.data.ok) { alert(r.data.message); return; }
+            $('#rg-count').text(r.data.count);
+            $('#rg-hl').html(r.data.highlighted || '(无匹配)');
+            $('#rg-matches').text(JSON.stringify(r.data.matches, null, 2));
+        });
+    }
+    function doCase() { postForm('/api/text/case', { target: $('#case-target').val(), input: $('#case-in').val() }, r => $('#case-out').text(r.data)); }
+    function doWc() {
+        postForm('/api/text/wordcount', { text: $('#wc-in').val() }, r => {
+            const d = r.data;
+            $('#wc-out').html(`<tr><th>字符数</th><td>${d.chars}</td></tr>
+                <tr><th>不含空白</th><td>${d.noSpace}</td></tr>
+                <tr><th>单词数</th><td>${d.words}</td></tr>
+                <tr><th>行数</th><td>${d.lines}</td></tr>
+                <tr><th>字节数(UTF-8)</th><td>${d.bytes}</td></tr>`);
+        });
+    }
+    function doConv() { postForm('/api/text/convert', { from: $('#conv-from').val(), to: $('#conv-to').val(), content: $('#conv-in').val() }, r => $('#conv-out').text(r.data)); }
+</script>
+</body>
+</html>

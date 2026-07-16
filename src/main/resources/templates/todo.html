@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('待办事项 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('todo')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">📝 待办事项</h4>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="card mb-3">
+                <div class="card-header fw-bold" id="formTitle">新增待办</div>
+                <div class="card-body">
+                    <input type="hidden" id="todoId">
+                    <div class="mb-2">
+                        <input class="form-control" id="title" placeholder="标题 *" required>
+                    </div>
+                    <div class="mb-2">
+                        <textarea class="form-control" id="description" rows="2" placeholder="描述"></textarea>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <select class="form-select" id="priority">
+                                <option value="LOW">低</option>
+                                <option value="MEDIUM" selected>中</option>
+                                <option value="HIGH">高</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="dueDate" placeholder="截止日期">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="submitTodo()">保存</button>
+                        <button class="btn btn-outline-secondary" onclick="resetForm()">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group mb-3" role="group">
+                <button class="btn btn-outline-primary active" onclick="filter(null,this)">全部</button>
+                <button class="btn btn-outline-primary" onclick="filter(false,this)">未完成</button>
+                <button class="btn btn-outline-primary" onclick="filter(true,this)">已完成</button>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle bg-white">
+                    <thead><tr><th>状态</th><th>标题</th><th>优先级</th><th>截止</th><th>操作</th></tr></thead>
+                    <tbody id="todoBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentFilter = null;
+
+    function loadTodos() {
+        let url = '/api/todos';
+        if (currentFilter !== null) url += '?completed=' + currentFilter;
+        $.get(url, function (res) {
+            const body = $('#todoBody');
+            body.empty();
+            if (!res.data || res.data.length === 0) {
+                body.append('<tr><td colspan="5" class="text-muted text-center">暂无数据</td></tr>');
+                return;
+            }
+            res.data.forEach(t => {
+                const badge = t.priority === 'HIGH' ? 'bg-danger' : t.priority === 'MEDIUM' ? 'bg-warning' : 'bg-secondary';
+                const checked = t.completed ? 'checked' : '';
+                body.append(
+                    `<tr>
+                        <td><input type="checkbox" ${checked} onchange="toggleTodo(${t.id})"></td>
+                        <td class="${t.completed ? 'text-decoration-line-through text-muted' : ''}">${esc(t.title)}</td>
+                        <td><span class="badge ${badge}">${t.priority}</span></td>
+                        <td>${t.dueDate ? t.dueDate : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editTodo(${t.id})">编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="delTodo(${t.id})">删</button>
+                        </td>
+                    </tr>`
+                );
+            });
+        });
+    }
+
+    function submitTodo() {
+        const id = $('#todoId').val();
+        const payload = {
+            title: $('#title').val(),
+            description: $('#description').val(),
+            priority: $('#priority').val(),
+            completed: false,
+            dueDate: $('#dueDate').val() ? $('#dueDate').val() : null
+        };
+        if (!payload.title) { alert('请填写标题'); return; }
+        const req = id
+            ? $.ajax({ url: '/api/todos/' + id, method: 'PUT', contentType: 'application/json', data: JSON.stringify(payload) })
+            : $.ajax({ url: '/api/todos', method: 'POST', contentType: 'application/json', data: JSON.stringify(payload) });
+        req.done(() => { resetForm(); loadTodos(); });
+    }
+
+    function editTodo(id) {
+        $.get('/api/todos/' + id, function (res) {
+            const t = res.data;
+            $('#todoId').val(t.id);
+            $('#title').val(t.title);
+            $('#description').val(t.description || '');
+            $('#priority').val(t.priority);
+            $('#dueDate').val(t.dueDate ? t.dueDate.substring(0, 10) : '');
+            $('#formTitle').text('编辑待办 #' + t.id);
+        });
+    }
+
+    function toggleTodo(id) {
+        $.ajax({ url: '/api/todos/' + id + '/toggle', method: 'PATCH' }).done(loadTodos);
+    }
+
+    function delTodo(id) {
+        if (!confirm('确认删除？')) return;
+        $.ajax({ url: '/api/todos/' + id, method: 'DELETE' }).done(loadTodos);
+    }
+
+    function resetForm() {
+        $('#todoId').val('');
+        $('#title').val('');
+        $('#description').val('');
+        $('#priority').val('MEDIUM');
+        $('#dueDate').val('');
+        $('#formTitle').text('新增待办');
+    }
+
+    function filter(val, btn) {
+        currentFilter = val;
+        $('.btn-group .btn').removeClass('active');
+        $(btn).addClass('active');
+        loadTodos();
+    }
+
+    function esc(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    $(function () { loadTodos(); });
+</script>
+</body>
+</html>

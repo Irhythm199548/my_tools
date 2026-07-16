@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('编码工具 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('encode')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">🔐 编码工具</h4>
+
+    <ul class="nav nav-tabs" id="encTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-base64">Base64</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-url">URL</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-md5">MD5</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-sha">SHA</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-aes">AES</button></li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- Base64 -->
+        <div class="tab-pane fade show active" id="t-base64">
+            <div class="input-group mb-2">
+                <select class="form-select" id="b64-action" style="max-width:140px">
+                    <option value="encode">编码</option><option value="decode">解码</option>
+                </select>
+                <button class="btn btn-primary" onclick="doBase64()">执行</button>
+            </div>
+            <textarea class="form-control mb-2" id="b64-in" rows="4" placeholder="输入文本"></textarea>
+            <pre class="result" id="b64-out"></pre>
+        </div>
+
+        <!-- URL -->
+        <div class="tab-pane fade" id="t-url">
+            <div class="input-group mb-2">
+                <select class="form-select" id="url-action" style="max-width:140px">
+                    <option value="encode">编码</option><option value="decode">解码</option>
+                </select>
+                <button class="btn btn-primary" onclick="doUrl()">执行</button>
+            </div>
+            <textarea class="form-control mb-2" id="url-in" rows="4" placeholder="输入文本"></textarea>
+            <pre class="result" id="url-out"></pre>
+        </div>
+
+        <!-- MD5 -->
+        <div class="tab-pane fade" id="t-md5">
+            <button class="btn btn-primary mb-2" onclick="doMd5()">生成 MD5</button>
+            <textarea class="form-control mb-2" id="md5-in" rows="4" placeholder="输入文本"></textarea>
+            <pre class="result" id="md5-out"></pre>
+        </div>
+
+        <!-- SHA -->
+        <div class="tab-pane fade" id="t-sha">
+            <div class="input-group mb-2">
+                <select class="form-select" id="sha-algo" style="max-width:140px">
+                    <option value="sha1">SHA-1</option>
+                    <option value="sha256" selected>SHA-256</option>
+                    <option value="sha512">SHA-512</option>
+                </select>
+                <button class="btn btn-primary" onclick="doSha()">生成</button>
+            </div>
+            <textarea class="form-control mb-2" id="sha-in" rows="4" placeholder="输入文本"></textarea>
+            <pre class="result" id="sha-out"></pre>
+        </div>
+
+        <!-- AES -->
+        <div class="tab-pane fade" id="t-aes">
+            <div class="input-group mb-2">
+                <select class="form-select" id="aes-action" style="max-width:140px">
+                    <option value="encrypt">加密</option><option value="decrypt">解密</option>
+                </select>
+                <button class="btn btn-primary" onclick="doAes()">执行</button>
+            </div>
+            <input class="form-control mb-2" id="aes-secret" placeholder="密钥（任意字符串，自动派生 AES-128）">
+            <textarea class="form-control mb-2" id="aes-in" rows="4" placeholder="输入文本"></textarea>
+            <pre class="result" id="aes-out"></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    function postForm(url, data, outId) {
+        $.ajax({ url: url, method: 'POST', data: data })
+            .done(r => $('#' + outId).text(r.data != null ? r.data : JSON.stringify(r, null, 2)))
+            .fail(r => $('#' + outId).text('错误: ' + (r.responseJSON ? r.responseJSON.message : r.statusText)));
+    }
+    function doBase64() { postForm('/api/encode/base64', { action: $('#b64-action').val(), text: $('#b64-in').val() }, 'b64-out'); }
+    function doUrl() { postForm('/api/encode/url', { action: $('#url-action').val(), text: $('#url-in').val() }, 'url-out'); }
+    function doMd5() { postForm('/api/encode/md5', { text: $('#md5-in').val() }, 'md5-out'); }
+    function doSha() { postForm('/api/encode/sha', { algorithm: $('#sha-algo').val(), text: $('#sha-in').val() }, 'sha-out'); }
+    function doAes() {
+        postForm('/api/encode/aes', { action: $('#aes-action').val(), content: $('#aes-in').val(), secret: $('#aes-secret').val() }, 'aes-out');
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('Cron 表达式 · my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('cron')}"></div>
+
+<div class="container mt-4">
+    <h4 class="section-title">⏰ Cron 表达式校验与解释</h4>
+
+    <div class="card">
+        <div class="card-body">
+            <label class="form-label">Cron 表达式（Quartz 格式，6~7 字段）</label>
+            <div class="input-group mb-2">
+                <input class="form-control" id="expr" placeholder="0 0/5 * * * ?">
+                <button class="btn btn-primary" onclick="validate()">校验</button>
+            </div>
+            <div class="mb-2">
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="fill('0 0/5 * * * ?')">每5分钟</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="fill('0 0 12 * * ?')">每天12点</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="fill('0 0 9 ? * MON-FRI')">工作日9点</button>
+                <button class="btn btn-sm btn-outline-secondary me-1" onclick="fill('0 */1 * * * ?')">每1分钟</button>
+            </div>
+            <div id="cron-result"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fill(e) { $('#expr').val(e); validate(); }
+    function validate() {
+        const expr = $('#expr').val();
+        if (!expr) { alert('请输入表达式'); return; }
+        $.post('/api/cron/validate', { expression: expr }, r => {
+            const d = r.data;
+            let html = '';
+            if (d.valid) {
+                html += `<div class="alert alert-success">✅ ${d.message}</div>`;
+                html += `<p><b>摘要：</b></p><pre class="result">${d.summary}</pre>`;
+                html += `<p class="mt-2"><b>未来 5 次执行时间：</b></p><ul class="list-group">`;
+                (d.nextFireTimes || []).forEach(t => html += `<li class="list-group-item">${t}</li>`);
+                html += `</ul>`;
+            } else {
+                html += `<div class="alert alert-danger">❌ ${d.message}</div>`;
+            }
+            $('#cron-result').html(html);
+        }).fail(e => $('#cron-result').html('<div class="alert alert-danger">错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText) + '</div>'));
+    }
+</script>
+</body>
+</html>
