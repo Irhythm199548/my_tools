@@ -1,7 +1,9 @@
 package com.workbuddy.controller;
 
 import com.workbuddy.common.ApiResponse;
+import com.workbuddy.common.ResultCode;
 import com.workbuddy.service.NetworkService;
+import com.workbuddy.utils.NetworkUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,6 +55,10 @@ public class NetworkController {
     public ApiResponse<Map<String, Object>> portScan(@RequestParam(defaultValue = "127.0.0.1") String host,
                                                      @RequestParam(defaultValue = "1") int from,
                                                      @RequestParam(defaultValue = "1024") int to) {
+        if (!NetworkUtils.isScannableHost(host)) {
+            return ApiResponse.error(ResultCode.FORBIDDEN.getCode(),
+                    "出于安全考虑，仅允许扫描本机或内网地址（127.0.0.1 / localhost / 10.x / 172.16-31.x / 192.168.x / 169.254.x）。");
+        }
         return ApiResponse.success(networkService.portScan(host, from, to));
     }
 }

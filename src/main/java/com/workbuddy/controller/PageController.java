@@ -28,6 +28,11 @@ public class PageController {
         return "index";
     }
 
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
     @GetMapping("/todo")
     public String todo() { return "todo"; }
 

@@ -205,10 +205,35 @@ public class NetworkUtils {
     // ============ 端口扫描（内网版） ============
 
     /**
+     * 是否为允许扫描的地址：仅本机或私有网段。
+     * 出于安全考虑（公网暴露时防止被当作端口扫描跳板/SSRF），
+     * 拒绝任何公网地址或解析到公网地址的主机名。
+     */
+    public static boolean isScannableHost(String host) {
+        if (host == null) return false;
+        String h = host.trim().toLowerCase();
+        if (h.isEmpty()) return false;
+        if ("localhost".equals(h) || "127.0.0.1".equals(h) || "::1".equals(h) || "[::1]".equals(h)) return true;
+        try {
+            java.net.InetAddress addr = java.net.InetAddress.getByName(h);
+            return addr.isLoopbackAddress() || addr.isSiteLocalAddress();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * 扫描 host 的 [from,to] 端口范围。
      * 使用 Socket 连接超时机制，线程池并发，线程安全（同步列表收集结果）。
+     * 安全限制：仅允许本机/内网地址；线程数与端口数上限封顶，防止资源耗尽。
      */
     public static Map<String, Object> portScan(String host, int from, int to, int threads, int timeout) {
+        Map<String, Object> denied = new HashMap<>();
+        if (!isScannableHost(host)) {
+            denied.put("ok", false);
+            denied.put("message", "出于安全考虑，仅允许扫描本机或内网地址（127.0.0.1 / localhost / 10.x / 172.16-31.x / 192.168.x / 169.254.x）。");
+            return denied;
+        }
         if (from < 1) from = 1;
         if (to > 65535) to = 65535;
         if (from > to) {
@@ -216,7 +241,10 @@ public class NetworkUtils {
             from = to;
             to = t;
         }
+        // 端口数封顶，避免单次扫描耗尽资源
+        if (to - from + 1 > 2000) to = from + 1999;
         if (threads < 1) threads = 32;
+        if (threads > 100) threads = 100;
 
         List<Integer> openPorts = Collections.synchronizedList(new ArrayList<>());
         ExecutorService pool = Executors.newFixedThreadPool(threads);
