@@ -57,15 +57,15 @@
 
 <script>
     function genUuid() {
-        $.get('/api/aux/uuid', { noDash: $('#uuid-nodash').is(':checked') }, r => $('#uuid-out').text(r.data));
+        $.get('/api/auxs/uuid', { noDash: $('#uuid-nodash').is(':checked') }, r => $('#uuid-out').text(r.data));
     }
     function genBatch() {
-        $.get('/api/aux/uuid/batch', { count: 10 }, r => $('#uuid-out').text(r.data.join('\n')));
+        $.get('/api/auxs/uuid/batch', { count: 10 }, r => $('#uuid-out').text(r.data.join('\n')));
     }
     function qrGen() {
         const content = $('#qr-content').val();
         if (!content) { alert('请输入内容'); return; }
-        $.post('/api/aux/qrcode/generate', { content: content, width: $('#qr-size').val(), height: $('#qr-size').val() }, r => {
+        $.post('/api/auxs/qrcode/generate', { content: content, width: $('#qr-size').val(), height: $('#qr-size').val() }, r => {
             $('#qr-img').html(`<img src="${r.data}" class="img-fluid border">`);
         }).fail(e => alert('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
     }
@@ -74,7 +74,7 @@
         if (!f) { alert('请选择二维码图片'); return; }
         const fd = new FormData();
         fd.append('file', f);
-        $.ajax({ url: '/api/aux/qrcode/parse', method: 'POST', data: fd, processData: false, contentType: false })
+        $.ajax({ url: '/api/auxs/qrcode/parse', method: 'POST', data: fd, processData: false, contentType: false })
             .done(r => $('#qr-out').text(r.data))
             .fail(e => $('#qr-out').text('错误: ' + (e.responseJSON ? e.responseJSON.message : e.statusText)));
     }

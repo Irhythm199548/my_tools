@@ -46,8 +46,8 @@ public class PageController {
     @GetMapping("/network")
     public String network() { return "network"; }
 
-    @GetMapping("/aux")
-    public String aux() { return "aux"; }
+    @GetMapping("/auxs")
+    public String aux() { return "auxs"; }
 
     @GetMapping("/cron")
     public String cron() { return "cron"; }

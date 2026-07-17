@@ -12,7 +12,7 @@ import java.util.List;
  * 辅助工具 REST API
  */
 @RestController
-@RequestMapping("/api/aux")
+@RequestMapping("/api/auxs")
 @RequiredArgsConstructor
 public class AuxController {
 
