@@ -26,6 +26,8 @@
         <zxing.version>3.5.3</zxing.version>
     </properties>
 
+    <!-- 已移除 Nacos BOM（配置中心）；后续学习 Docker/Nacos 时再加回 -->
+
     <dependencies>
         <!-- Web / MVC -->
         <dependency>
@@ -58,6 +60,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-quartz</artifactId>
         </dependency>
+        <!-- 邮件（注册 / 找回密码 验证码发送） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- 已移除 Nacos Config 依赖（配置中心）；改用 application.yml 明文配置 -->
 
         <!-- MySQL 驱动。
              注意：Connector/J 的 8.0.x 版本线最高只发布到 8.0.33（8.0.46 不存在，

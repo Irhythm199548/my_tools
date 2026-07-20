@@ -19,6 +19,10 @@ public class Pomodoro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 所属用户（多账号隔离） */
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     /** 专注标签，如 "coding"、"reading" */
     @Column(length = 100)
     private String tag;

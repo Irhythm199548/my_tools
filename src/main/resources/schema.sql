@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS todo (
     description VARCHAR(1000),
     priority    VARCHAR(10)  NOT NULL DEFAULT 'MEDIUM',
     completed   BIT(1)       NOT NULL DEFAULT 0,
-    due_date    DATE,
+    due_date    DATETIME,
     created_at  DATETIME,
     updated_at  DATETIME,
     PRIMARY KEY (id),
@@ -53,10 +53,12 @@ CREATE TABLE IF NOT EXISTS user_preference (
 -- 操作日志（工具使用次数统计）
 CREATE TABLE IF NOT EXISTS operation_log (
     id            BIGINT      NOT NULL AUTO_INCREMENT,
+    user_id       BIGINT      NOT NULL DEFAULT 0,
     tool_name     VARCHAR(100) NOT NULL,
     tool_category VARCHAR(50),
     use_count     BIGINT      NOT NULL DEFAULT 0,
     last_used_at  DATETIME,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_tool_name (tool_name)
+    -- 按用户隔离：同一用户同一工具只统计一行（与 OperationLog 实体 @UniqueConstraint 一致）
+    UNIQUE KEY uk_user_tool (user_id, tool_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

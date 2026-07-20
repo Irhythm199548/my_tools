@@ -21,7 +21,13 @@
                         </div>
                         <button type="submit" class="btn btn-primary w-100">登录</button>
                     </form>
-                    <p class="text-muted small mt-3 mb-0">本服务已开启登录鉴权，凭据见服务端 application.yml 或启动日志。</p>
+                    <p class="text-center mt-3 mb-1">
+                        <a th:href="@{/register}">还没有账号？去注册</a>
+                    </p>
+                    <p class="text-center mb-2">
+                        <a th:href="@{/forgot}">忘记密码？</a>
+                    </p>
+                    <p class="text-muted small mb-0 text-center">本服务已开启登录鉴权，凭据见服务端 application.yml 或启动日志。</p>
                 </div>
             </div>
         </div>

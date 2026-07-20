@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 番茄钟 Service
+ * 番茄钟 Service（按用户隔离）
  */
 @Service
 @RequiredArgsConstructor
@@ -22,30 +22,32 @@ public class PomodoroService {
 
     private final PomodoroRepository repository;
 
-    public List<Pomodoro> recent() {
-        return repository.findTop50ByOrderByStartTimeDesc();
+    public List<Pomodoro> recent(Long userId) {
+        return repository.findByUserIdOrderByStartTimeDesc(userId);
     }
 
-    public Pomodoro save(Pomodoro pomodoro) {
+    public Pomodoro save(Long userId, Pomodoro pomodoro) {
+        pomodoro.setId(null);
+        pomodoro.setUserId(userId);
         return repository.save(pomodoro);
     }
 
-    public long totalSeconds() {
-        return repository.sumDuration();
+    public long totalSeconds(Long userId) {
+        return repository.sumDuration(userId);
     }
 
-    public long todaySeconds() {
+    public long todaySeconds(Long userId) {
         Date[] range = todayRange();
-        return repository.sumDurationToday(range[0], range[1]);
+        return repository.sumDurationToday(userId, range[0], range[1]);
     }
 
-    public long totalCount() {
-        return repository.countAll();
+    public long totalCount(Long userId) {
+        return repository.countAll(userId);
     }
 
-    public long todayCount() {
+    public long todayCount(Long userId) {
         Date[] range = todayRange();
-        return repository.countToday(range[0], range[1]);
+        return repository.countToday(userId, range[0], range[1]);
     }
 
     /** 返回 [今日 00:00, 明日 00:00) 的 Date 区间（Asia/Shanghai） */

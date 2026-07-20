@@ -20,6 +20,10 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 所属用户（多账号隔离） */
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -33,9 +37,9 @@ public class Todo {
     @Column(nullable = false)
     private Boolean completed = false;
 
-    /** 截止日期（仅日期） */
-    @Temporal(TemporalType.DATE)
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    /** 截止时间（年月日时分秒） */
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dueDate;
 
     @Temporal(TemporalType.TIMESTAMP)

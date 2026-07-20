@@ -22,6 +22,10 @@ public class ApiResponse<T> {
     /** 业务数据 */
     private T data;
 
+    public static <T> ApiResponse<T> success() {
+        return new ApiResponse<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), null);
+    }
+
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
     }

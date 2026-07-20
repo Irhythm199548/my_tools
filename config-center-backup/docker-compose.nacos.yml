@@ -1,0 +1,21 @@
+# 本地快速起一个 Nacos 单机版（仅用于体验/测试，生产请用集群 + 开启鉴权）。
+# 用法：
+#   docker compose -f docker-compose.nacos.yml up -d
+# 启动后访问 http://localhost:8848/nacos  （默认账号/密码：nacos / nacos）
+# 然后按 nacos/my-tools.yaml.example 在控制台创建配置即可。
+#
+# 生产注意：
+#   - 把 MODE=standalone 改为集群部署，并开启 NACOS_AUTH_ENABLE=true
+#   - 不要在容器里裸奔 8848 端口，配合反向代理 + 鉴权 + 内网访问控制
+services:
+  nacos:
+    image: nacos/nacos-server:v2.2.3
+    container_name: mytools-nacos
+    environment:
+      - MODE=standalone
+      - NACOS_AUTH_ENABLE=false
+      - JVM_XMS=512m
+      - JVM_XMX=512m
+    ports:
+      - "8848:8848"
+    restart: unless-stopped

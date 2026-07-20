@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head('个人中心 - my tools')}"></head>
+<body>
+<div th:replace="~{fragments :: nav('personal')}"></div>
+
+<div class="container mt-4">
+    <h2 class="fw-bold mb-4">⚙️ 个人中心</h2>
+
+    <div class="row g-4">
+        <!-- 头像 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">头像</h5>
+                    <div class="my-3">
+                        <img th:if="${me.avatar != null}" th:src="${me.avatar}"
+                             class="rounded-circle border" style="width:120px;height:120px;object-fit:cover;" alt="头像"/>
+                        <div th:if="${me.avatar == null}" class="rounded-circle border d-inline-flex align-items-center justify-content-center bg-light"
+                             style="width:120px;height:120px;font-size:3rem;" th:text="${#strings.substring(me.nickname,0,1)}">头像</div>
+                    </div>
+                    <div class="mb-2">
+                        <input type="file" id="avatarFile" class="form-control" accept="image/png,image/jpeg,image/gif,image/webp"/>
+                        <div class="form-text">支持 png/jpg/jpeg/gif/webp，不超过 2MB。</div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="avatarBtn">上传头像</button>
+                    <div id="avatarMsg" class="alert d-none mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 资料 -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">基本资料</h5>
+                    <div id="profileMsg" class="alert d-none"></div>
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" th:value="${me.username}" disabled="disabled"/>
+                            <div class="form-text">用户名注册后不可修改。</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">昵称 <span class="text-danger">*</span></label>
+                            <input type="text" id="nickname" class="form-control" required="required" maxlength="50" th:value="${me.nickname}"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">个人简介</label>
+                            <textarea id="bio" class="form-control" rows="2" maxlength="500" th:text="${me.bio}"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">手机号</label>
+                                <input type="text" id="phone" class="form-control" maxlength="30" th:value="${me.phone}"/>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">所在地</label>
+                                <input type="text" id="location" class="form-control" maxlength="100" th:value="${me.location}"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">个人网站</label>
+                                <input type="text" id="website" class="form-control" maxlength="200" th:value="${me.website}"/>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">公司</label>
+                                <input type="text" id="company" class="form-control" maxlength="100" th:value="${me.company}"/>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">生日</label>
+                            <input type="date" id="birthday" class="form-control"
+                                   th:value="${me.birthday != null} ? ${#dates.format(me.birthday,'yyyy-MM-dd')} : ''"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存资料</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 修改密码 -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">修改密码</h5>
+                    <div id="pwdMsg" class="alert d-none"></div>
+                    <form id="pwdForm">
+                        <div class="mb-3">
+                            <label class="form-label">原密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="oldPassword" class="form-control" required="required"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="newPassword" class="form-control" required="required" minlength="6" maxlength="64"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">确认新密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="newPassword2" class="form-control" required="required"/>
+                        </div>
+                        <button type="submit" class="btn btn-warning">更新密码</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具配置 -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <h5 class="card-title">工具配置</h5>
+            <p class="text-muted">仅展示已开启的工具模块。关闭后，导航与首页快捷入口将不再显示该工具。</p>
+            <div id="toolsMsg" class="alert d-none"></div>
+            <div class="row">
+                <div class="col-md-4 col-6 mb-2" th:each="t : ${allTools}">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input tool-toggle" type="checkbox" th:value="${t.key}"
+                               th:checked="${#lists.contains(enabledTools, t.key)}" th:id="${'tool-' + t.key}"/>
+                        <label class="form-check-label" th:for="${'tool-' + t.key}">
+                            <span th:text="${t.icon + ' ' + t.label}">工具</span>
+                            <small class="text-muted d-block" th:text="${t.category}"></small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary mt-2" id="saveToolsBtn">保存工具配置</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    function showMsgIn(sel, type, text) {
+        var box = $(sel);
+        box.removeClass('d-none alert-success alert-danger')
+           .addClass(type === 'ok' ? 'alert-success' : 'alert-danger').text(text);
+    }
+    function ajaxErrorIn(sel, xhr) {
+        var m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '请求失败，请稍后重试';
+        showMsgIn(sel, 'err', m);
+    }
+
+    // 保存资料
+    $('#profileForm').on('submit', function (e) {
+        e.preventDefault();
+        var payload = {
+            nickname: $('#nickname').val().trim(),
+            bio: $('#bio').val(),
+            phone: $('#phone').val(),
+            location: $('#location').val(),
+            website: $('#website').val(),
+            company: $('#company').val(),
+            birthday: $('#birthday').val()
+        };
+        $.ajax({
+            url: '/api/account/profile', type: 'PUT', contentType: 'application/json',
+            data: JSON.stringify(payload)
+        }).done(function (res) {
+            if (res && res.code === 0) showMsgIn('#profileMsg', 'ok', '资料已保存');
+            else showMsgIn('#profileMsg', 'err', (res && res.message) || '保存失败');
+        }).fail(function (xhr) { ajaxErrorIn('#profileMsg', xhr); });
+    });
+
+    // 修改密码
+    $('#pwdForm').on('submit', function (e) {
+        e.preventDefault();
+        var np = $('#newPassword').val();
+        if (np !== $('#newPassword2').val()) { showMsgIn('#pwdMsg', 'err', '两次输入的新密码不一致'); return; }
+        $.ajax({
+            url: '/api/account/password', type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ oldPassword: $('#oldPassword').val(), newPassword: np })
+        }).done(function (res) {
+            if (res && res.code === 0) {
+                showMsgIn('#pwdMsg', 'ok', '密码已更新');
+                $('#pwdForm')[0].reset();
+            } else showMsgIn('#pwdMsg', 'err', (res && res.message) || '更新失败');
+        }).fail(function (xhr) { ajaxErrorIn('#pwdMsg', xhr); });
+    });
+
+    // 上传头像
+    $('#avatarBtn').on('click', function () {
+        var f = $('#avatarFile')[0].files[0];
+        if (!f) { showMsgIn('#avatarMsg', 'err', '请先选择图片'); return; }
+        var fd = new FormData();
+        fd.append('file', f);
+        var csrf = $('meta[name="_csrf"]').attr('content');
+        if (csrf) fd.append('_csrf', csrf);
+        $.ajax({
+            url: '/api/account/avatar', type: 'POST', data: fd,
+            processData: false, contentType: false
+        }).done(function (res) {
+            if (res && res.code === 0 && res.data && res.data.url) {
+                showMsgIn('#avatarMsg', 'ok', '头像已更新');
+                setTimeout(function () { window.location.reload(); }, 800);
+            } else showMsgIn('#avatarMsg', 'err', (res && res.message) || '上传失败');
+        }).fail(function (xhr) { ajaxErrorIn('#avatarMsg', xhr); });
+    });
+
+    // 保存工具配置
+    $('#saveToolsBtn').on('click', function () {
+        var enabled = [];
+        $('.tool-toggle:checked').each(function () { enabled.push($(this).val()); });
+        $.ajax({
+            url: '/api/account/tools', type: 'PUT', contentType: 'application/json',
+            data: JSON.stringify({ enabled: enabled })
+        }).done(function (res) {
+            if (res && res.code === 0) showMsgIn('#toolsMsg', 'ok', '工具配置已保存，将在下次刷新后生效。');
+            else showMsgIn('#toolsMsg', 'err', (res && res.message) || '保存失败');
+        }).fail(function (xhr) { ajaxErrorIn('#toolsMsg', xhr); });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

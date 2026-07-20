@@ -7,21 +7,22 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface TodoRepository extends JpaRepository<Todo, Long> {
 
-    List<Todo> findByCompleted(Boolean completed);
+    List<Todo> findByUserIdAndCompleted(Long userId, Boolean completed);
 
-    List<Todo> findByPriority(Priority priority);
+    List<Todo> findByUserIdOrderByCreatedAtDesc(Long userId);
 
-    List<Todo> findByCompletedIsFalseOrderByPriorityAscCreatedAtDesc();
+    List<Todo> findByUserIdAndPriority(Long userId, Priority priority);
 
-    /** 统计各优先级数量 */
-    @Query("select t.priority, count(t) from Todo t group by t.priority")
-    List<Object[]> countByPriority();
+    List<Todo> findByUserIdAndCompletedIsFalseOrderByPriorityAscCreatedAtDesc(Long userId);
 
-    /** 未完成任务数 */
-    @Query("select count(t) from Todo t where t.completed = false")
-    long countUncompleted();
+    /** 统计某用户各优先级数量 */
+    @Query("select t.priority, count(t) from Todo t where t.userId = :userId group by t.priority")
+    List<Object[]> countByPriority(@Param("userId") Long userId);
+
+    /** 某用户未完成任务数 */
+    @Query("select count(t) from Todo t where t.userId = :userId and t.completed = false")
+    long countUncompleted(@Param("userId") Long userId);
 }

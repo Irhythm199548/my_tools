@@ -1,0 +1,20 @@
+# Nacos 配置示例 —— 在 Nacos 控制台创建配置：
+#   Data ID : my-tools.yaml
+#   Group   : MY_TOOLS_GROUP
+#   Format  : YAML
+# 把下面的值替换成真实值即可（不要把这个文件连同真实密文提交到仓库）。
+#
+# 应用侧：application.yml 用 ${ADMIN_PASSWORD:} / ${MAIL_PASSWORD:} 读取，
+# 而 Nacos 把这些键作为 Spring 属性下发后，占位符会自动解析到此处的值。
+# 同时仍可被真实操作系统环境变量覆盖（环境变量优先级更高）。
+
+# 默认管理员密码（首次启动且库无用户时播种；留空则随机生成）
+ADMIN_PASSWORD: 851570973+
+
+# 邮件 SMTP（host 留空则进入开发模式：仅控制台打印验证码，不真实发信）
+MAIL_HOST: smtp.163.com
+MAIL_PORT: "465"
+MAIL_USERNAME: service_anchor@163.com
+MAIL_PASSWORD: 你的邮箱SMTP授权码
+# From 必须与 MAIL_USERNAME 一致（163/QQ 强制要求），否则报 553
+MAIL_FROM: service_anchor@163.com

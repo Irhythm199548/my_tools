@@ -35,7 +35,7 @@
                 <div class="card-body">
                     <div class="tool-icon">🧰</div>
                     <h5 class="card-title mt-2">工具模块</h5>
-                    <p class="card-text">编码 · 文本 · 转换 · 网络 · 辅助</p>
+                    <p class="card-text">已启用 <span th:text="${enabledToolMetas.size()}">0</span> 个工具</p>
                 </div>
             </div>
         </div>
@@ -52,29 +52,21 @@
 
     <h4 class="section-title">快捷入口</h4>
     <div class="row g-3">
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/encode"><div class="card-body"><div class="tool-icon">🔐</div><h6>编码工具</h6></div></a>
+        <div class="col-6 col-md-3" th:each="t : ${enabledToolMetas}">
+            <a class="card card-link" th:href="${t.url}">
+                <div class="card-body">
+                    <div class="tool-icon" th:text="${t.icon}">🔧</div>
+                    <h6 th:text="${t.label}">工具</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-12" th:if="${#lists.isEmpty(enabledToolMetas)}">
+            <div class="alert alert-info">尚未启用任何工具，请前往「个人中心」开启需要的工具模块。</div>
         </div>
         <div class="col-6 col-md-3">
-            <a class="card card-link" href="/text"><div class="card-body"><div class="tool-icon">📄</div><h6>文本处理</h6></div></a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/convert"><div class="card-body"><div class="tool-icon">🔄</div><h6>格式转换</h6></div></a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/network"><div class="card-body"><div class="tool-icon">🌐</div><h6>网络与安全</h6></div></a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/auxs"><div class="card-body"><div class="tool-icon">🧩</div><h6>辅助工具</h6></div></a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/cron"><div class="card-body"><div class="tool-icon">⏰</div><h6>Cron 表达式</h6></div></a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/pomodoro"><div class="card-body"><div class="tool-icon">🍅</div><h6>番茄钟</h6></div></a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a class="card card-link" href="/logs"><div class="card-body"><div class="tool-icon">📊</div><h6>使用统计</h6></div></a>
+            <a class="card card-link" href="/personal">
+                <div class="card-body"><div class="tool-icon">⚙️</div><h6>个人中心</h6></div>
+            </a>
         </div>
     </div>
 

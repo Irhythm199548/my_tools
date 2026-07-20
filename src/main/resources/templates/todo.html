@@ -14,7 +14,7 @@
                 <div class="card-body">
                     <input type="hidden" id="todoId">
                     <div class="mb-2">
-                        <input class="form-control" id="title" placeholder="标题 *" required>
+                        <input class="form-control" id="title" placeholder="标题 *（如“明天晚上拿快递”会自动识别时间）" required oninput="onTitleInput()">
                     </div>
                     <div class="mb-2">
                         <textarea class="form-control" id="description" rows="2" placeholder="描述"></textarea>
@@ -28,7 +28,8 @@
                             </select>
                         </div>
                         <div class="col-6">
-                            <input type="date" class="form-control" id="dueDate" placeholder="截止日期">
+                            <input type="datetime-local" class="form-control" id="dueDate" step="1" placeholder="截止时间" onchange="manualTime=true;$('#timeHint').addClass('d-none');">
+                            <small id="timeHint" class="text-info d-none mt-1 d-block"></small>
                         </div>
                     </div>
                     <div class="d-flex gap-2">
@@ -58,6 +59,47 @@
 
 <script>
     let currentFilter = null;
+    let parseTimer = null;
+    let manualTime = false; // 用户是否手动改过时间
+
+    // 服务器 "yyyy-MM-dd HH:mm:ss" -> input[datetime-local] "yyyy-MM-ddTHH:mm:ss"
+    function serverToLocal(v) {
+        if (!v) return '';
+        return v.substring(0, 19).replace(' ', 'T');
+    }
+    // input[datetime-local] "2026-07-21T20:00[:ss]" -> 服务器 "yyyy-MM-dd HH:mm:ss"
+    function localToServer(v) {
+        if (!v) return null;
+        let s = v.replace('T', ' ');
+        if (s.length <= 16) s += ':00'; // 补足秒
+        return s;
+    }
+
+    // 标题输入变化时，防抖调用后端解析时间并自动填充
+    function onTitleInput() {
+        if (manualTime) return; // 手动设过时间就不再自动覆盖
+        clearTimeout(parseTimer);
+        const title = $('#title').val();
+        if (!title) { $('#timeHint').addClass('d-none'); return; }
+        parseTimer = setTimeout(function () {
+            $.ajax({
+                url: '/api/todos/parse-time',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ text: title }),
+                cache: false
+            }).done(function (res) {
+                const d = res.data || {};
+                if (d.matched && d.dueDate) {
+                    $('#dueDate').val(serverToLocal(d.dueDate));
+                    $('#timeHint').removeClass('d-none')
+                        .text('🪄 已从标题识别时间：' + d.dueDate + '（可手动修改）');
+                } else {
+                    $('#timeHint').addClass('d-none');
+                }
+            });
+        }, 600);
+    }
 
     function loadTodos() {
         let url = '/api/todos';
@@ -90,12 +132,13 @@
 
     function submitTodo() {
         const id = $('#todoId').val();
+        const local = $('#dueDate').val();
         const payload = {
             title: $('#title').val(),
             description: $('#description').val(),
             priority: $('#priority').val(),
             completed: false,
-            dueDate: $('#dueDate').val() ? $('#dueDate').val() : null
+            dueDate: local ? localToServer(local) : null
         };
         if (!payload.title) { alert('请填写标题'); return; }
         const req = id
@@ -111,7 +154,8 @@
             $('#title').val(t.title);
             $('#description').val(t.description || '');
             $('#priority').val(t.priority);
-            $('#dueDate').val(t.dueDate ? t.dueDate.substring(0, 10) : '');
+            $('#dueDate').val(t.dueDate ? serverToLocal(t.dueDate) : '');
+            $('#timeHint').addClass('d-none');
             $('#formTitle').text('编辑待办 #' + t.id);
         });
     }
@@ -131,6 +175,8 @@
         $('#description').val('');
         $('#priority').val('MEDIUM');
         $('#dueDate').val('');
+        $('#timeHint').addClass('d-none');
+        manualTime = false;
         $('#formTitle').text('新增待办');
     }
 

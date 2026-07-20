@@ -13,13 +13,17 @@ import java.util.Date;
 @NoArgsConstructor
 @Entity
 @Table(name = "user_preference", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_pref_key", columnNames = "pref_key")
+        @UniqueConstraint(name = "uk_user_pref", columnNames = {"user_id", "pref_key"})
 })
 public class UserPreference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** 所属用户（多账号隔离） */
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "pref_key", nullable = false, length = 100)
     private String key;

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head( title='注册 - my tools')}"></head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">🛠️ 注册 my tools 账号</h3>
+                    <div id="msg" class="alert d-none"></div>
+                    <form id="regForm">
+                        <div class="mb-3">
+                            <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                            <input type="text" id="username" class="form-control" required="required"
+                                   pattern="^[a-zA-Z0-9_]{3,20}$" title="3-20 位字母/数字/下划线"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="email" id="email" class="form-control" required="required"/>
+                                <button type="button" class="btn btn-outline-secondary" id="sendCodeBtn">发送验证码</button>
+                            </div>
+                            <div class="form-text">验证码将发送至邮箱（未配置 SMTP 时打印在服务端控制台）。</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱验证码 <span class="text-danger">*</span></label>
+                            <input type="text" id="code" class="form-control" required="required" maxlength="10"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">昵称 <span class="text-danger">*</span></label>
+                            <input type="text" id="nickname" class="form-control" required="required" maxlength="50"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="password" class="form-control" required="required" minlength="6" maxlength="64"/>
+                            <div class="form-text">6-64 位字符。</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">确认密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="confirmPassword" class="form-control" required="required"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">注册</button>
+                    </form>
+                    <p class="text-center mt-3 mb-0">
+                        已有账号？<a th:href="@{/login}">去登录</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    function showMsg(type, text) {
+        var box = $('#msg');
+        box.removeClass('d-none alert-success alert-danger').addClass(type === 'ok' ? 'alert-success' : 'alert-danger').text(text);
+    }
+
+    function ajaxError(xhr) {
+        var m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '请求失败，请稍后重试';
+        showMsg('err', m);
+    }
+
+    // 发送验证码倒计时
+    var timer = null;
+    $('#sendCodeBtn').on('click', function () {
+        var email = $('#email').val().trim();
+        if (!email) { showMsg('err', '请先填写邮箱'); return; }
+        var btn = $(this);
+        $.ajax({
+            url: '/api/account/send-code',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email: email, type: 'REGISTER' })
+        }).done(function (res) {
+            if (res && res.code === 0) {
+                showMsg('ok', '验证码已发送，请查收邮箱（或查看服务端控制台）。');
+                var left = 60;
+                btn.prop('disabled', true).text(left + ' 秒后重发');
+                timer = setInterval(function () {
+                    left--;
+                    if (left <= 0) {
+                        clearInterval(timer);
+                        btn.prop('disabled', false).text('发送验证码');
+                    } else {
+                        btn.text(left + ' 秒后重发');
+                    }
+                }, 1000);
+            } else {
+                showMsg('err', (res && res.message) || '发送失败');
+            }
+        }).fail(ajaxError);
+    });
+
+    $('#regForm').on('submit', function (e) {
+        e.preventDefault();
+        var pwd = $('#password').val();
+        if (pwd !== $('#confirmPassword').val()) {
+            showMsg('err', '两次输入的密码不一致');
+            return;
+        }
+        var payload = {
+            username: $('#username').val().trim(),
+            email: $('#email').val().trim(),
+            code: $('#code').val().trim(),
+            password: pwd,
+            nickname: $('#nickname').val().trim()
+        };
+        $.ajax({
+            url: '/api/account/register',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload)
+        }).done(function (res) {
+            if (res && res.code === 0) {
+                showMsg('ok', '注册成功，正在跳转到登录页…');
+                setTimeout(function () { window.location.href = '/login'; }, 1200);
+            } else {
+                showMsg('err', (res && res.message) || '注册失败');
+            }
+        }).fail(ajaxError);
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

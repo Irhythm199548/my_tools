@@ -46,12 +46,34 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  # 已移除 Nacos 配置中心：配置改为明文写在下方 mytools.mail / mytools.admin（本地/学习用）。
+
 # 自定义配置
 mytools:
-  # ===== 登录鉴权（公网暴露必填，未填密码则启动时随机生成并打印到日志）=====
-  security:
-    user: admin
-    password: root
+  # ===== 默认管理员：首次启动且库中无用户时播种 =====
+  # 若库已存在用户则不生效。以下为明文（本地/学习用）；生产再改配置中心。
+  admin:
+    username: admin
+    email: admin@localhost
+    # 明文管理员密码（本地/学习用）。库已存在 admin 时不会重新播种；
+    # 改密码需先 DELETE FROM user_account WHERE username='admin'; 再重启。
+    password: Admin123456
+  # ===== 头像等上传文件根目录（相对 jar 或绝对路径均可）=====
+  upload:
+    dir: ./uploads
+  # ===== 邮件 SMTP 配置（明文，本地/学习用）=====
+  # 生产环境建议改用配置中心（Nacos 等）存放密码，不进仓库。
+  mail:
+    host: smtp.163.com
+    port: 465
+    username: service_anchor@163.com
+    # 163 邮箱「授权码」（非登录密码）。留空则进入开发模式：验证码仅打印控制台、不真实发信。
+    password: BUi3w35XteqYJVd2
+    # From 必须与 username 一致（163/QQ 强制要求），否则报 553
+    from: service_anchor@163.com
+    ssl: true
+    # 验证码有效期（秒）
+    code-ttl: 300
   qrcode:
     width: 300
     height: 300

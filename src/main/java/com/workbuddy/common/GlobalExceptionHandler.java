@@ -48,6 +48,13 @@ public class GlobalExceptionHandler {
         return ApiResponse.error("上传文件超过大小限制");
     }
 
+    /** 业务异常：回显受控的提示信息（不泄露内部细节） */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BizException.class)
+    public ApiResponse<Void> handleBiz(BizException e) {
+        return ApiResponse.error(ResultCode.VALIDATE_FAILED.getCode(), e.getMessage());
+    }
+
     /** 业务/运行时异常统一兜底：记录详细日志，但仅向客户端返回通用信息，避免泄露内部细节 */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)

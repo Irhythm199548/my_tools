@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head( title='出错了 - my tools')}"></head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-sm text-center">
+                <div class="card-body p-5">
+                    <div class="display-1 fw-bold text-secondary" th:text="${status}">500</div>
+                    <h3 class="mt-3 mb-3" th:text="${error} ?: '请求处理出错'">请求处理出错</h3>
+                    <p class="text-muted" th:if="${message}" th:text="${message}">服务器开小差了，请稍后再试。</p>
+                    <p class="text-muted" th:unless="${message}">服务器开小差了，请稍后再试。</p>
+                    <p class="text-muted small" th:if="${path}" th:text="'请求路径：' + ${path}"></p>
+                    <div class="mt-4">
+                        <a th:href="@{/}" class="btn btn-primary me-2">返回首页</a>
+                        <a th:href="@{/login}" class="btn btn-outline-secondary">去登录</a>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-muted small mt-3">若问题持续出现，请联系管理员或查看服务端日志。</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

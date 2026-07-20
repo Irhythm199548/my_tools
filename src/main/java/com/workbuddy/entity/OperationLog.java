@@ -13,7 +13,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Entity
 @Table(name = "operation_log", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_tool_name", columnNames = "tool_name")
+        @UniqueConstraint(name = "uk_user_tool", columnNames = {"user_id", "tool_name"})
 })
 public class OperationLog {
 
@@ -21,7 +21,11 @@ public class OperationLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 工具名称（唯一） */
+    /** 所属用户（多账号隔离） */
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    /** 工具名称 */
     @Column(name = "tool_name", nullable = false, length = 100)
     private String toolName;
 

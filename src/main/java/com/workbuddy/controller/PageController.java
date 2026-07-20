@@ -1,6 +1,7 @@
 package com.workbuddy.controller;
 
 import com.workbuddy.common.ApiResponse;
+import com.workbuddy.config.CurrentUser;
 import com.workbuddy.service.OperationLogService;
 import com.workbuddy.service.PomodoroService;
 import com.workbuddy.service.TodoService;
@@ -19,11 +20,13 @@ public class PageController {
     private final TodoService todoService;
     private final PomodoroService pomodoroService;
     private final OperationLogService logService;
+    private final CurrentUser currentUser;
 
     @GetMapping("/")
     public String index(Model model) {
-        model.addAttribute("todoCount", todoService.countUncompleted());
-        model.addAttribute("focusToday", pomodoroService.todaySeconds());
+        Long userId = currentUser.getUserId();
+        model.addAttribute("todoCount", todoService.countUncompleted(userId));
+        model.addAttribute("focusToday", pomodoroService.todaySeconds(userId));
         model.addAttribute("toolUsage", logService.stats());
         return "index";
     }
@@ -31,6 +34,21 @@ public class PageController {
     @GetMapping("/login")
     public String login() {
         return "login";
+    }
+
+    @GetMapping("/register")
+    public String register() {
+        return "register";
+    }
+
+    @GetMapping("/forgot")
+    public String forgot() {
+        return "forgot";
+    }
+
+    @GetMapping("/personal")
+    public String personal() {
+        return "personal";
     }
 
     @GetMapping("/todo")

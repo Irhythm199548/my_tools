@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments :: head( title='找回密码 - my tools')}"></head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">🔑 找回密码</h3>
+                    <div id="msg" class="alert d-none"></div>
+                    <form id="resetForm">
+                        <div class="mb-3">
+                            <label class="form-label">注册邮箱 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="email" id="email" class="form-control" required="required"/>
+                                <button type="button" class="btn btn-outline-secondary" id="sendCodeBtn">发送验证码</button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱验证码 <span class="text-danger">*</span></label>
+                            <input type="text" id="code" class="form-control" required="required" maxlength="10"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="newPassword" class="form-control" required="required" minlength="6" maxlength="64"/>
+                            <div class="form-text">6-64 位字符。</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">确认新密码 <span class="text-danger">*</span></label>
+                            <input type="password" id="confirmPassword" class="form-control" required="required"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">重置密码</button>
+                    </form>
+                    <p class="text-center mt-3 mb-0">
+                        想起来了？<a th:href="@{/login}">去登录</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    function showMsg(type, text) {
+        var box = $('#msg');
+        box.removeClass('d-none alert-success alert-danger').addClass(type === 'ok' ? 'alert-success' : 'alert-danger').text(text);
+    }
+    function ajaxError(xhr) {
+        var m = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '请求失败，请稍后重试';
+        showMsg('err', m);
+    }
+
+    var timer = null;
+    $('#sendCodeBtn').on('click', function () {
+        var email = $('#email').val().trim();
+        if (!email) { showMsg('err', '请先填写邮箱'); return; }
+        var btn = $(this);
+        $.ajax({
+            url: '/api/account/send-code',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email: email, type: 'RESET' })
+        }).done(function (res) {
+            if (res && res.code === 0) {
+                showMsg('ok', '验证码已发送，请查收邮箱（或查看服务端控制台）。');
+                var left = 60;
+                btn.prop('disabled', true).text(left + ' 秒后重发');
+                timer = setInterval(function () {
+                    left--;
+                    if (left <= 0) { clearInterval(timer); btn.prop('disabled', false).text('发送验证码'); }
+                    else { btn.text(left + ' 秒后重发'); }
+                }, 1000);
+            } else {
+                showMsg('err', (res && res.message) || '发送失败');
+            }
+        }).fail(ajaxError);
+    });
+
+    $('#resetForm').on('submit', function (e) {
+        e.preventDefault();
+        var pwd = $('#newPassword').val();
+        if (pwd !== $('#confirmPassword').val()) {
+            showMsg('err', '两次输入的密码不一致');
+            return;
+        }
+        $.ajax({
+            url: '/api/account/forgot/reset',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email: $('#email').val().trim(), code: $('#code').val().trim(), newPassword: pwd })
+        }).done(function (res) {
+            if (res && res.code === 0) {
+                showMsg('ok', '密码重置成功，正在跳转到登录页…');
+                setTimeout(function () { window.location.href = '/login'; }, 1200);
+            } else {
+                showMsg('err', (res && res.message) || '重置失败');
+            }
+        }).fail(ajaxError);
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

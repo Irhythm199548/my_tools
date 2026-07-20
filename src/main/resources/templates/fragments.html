@@ -55,16 +55,17 @@
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" th:classappend="${active}=='home' ? 'active' : ''" href="/">首页</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='todo' ? 'active' : ''" href="/todo">待办</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='pomodoro' ? 'active' : ''" href="/pomodoro">番茄钟</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='encode' ? 'active' : ''" href="/encode">编码</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='text' ? 'active' : ''" href="/text">文本</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='convert' ? 'active' : ''" href="/convert">转换</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='network' ? 'active' : ''" href="/network">网络</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='auxs' ? 'active' : ''" href="/auxs">辅助</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='cron' ? 'active' : ''" href="/cron">Cron</a></li>
-                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='logs' ? 'active' : ''" href="/logs">统计</a></li>
+                <li class="nav-item" th:each="t : ${enabledToolMetas}">
+                    <a class="nav-link" th:classappend="${active == t.key} ? 'active' : ''"
+                       th:href="${t.url}" th:text="${t.icon + ' ' + t.label}"></a>
+                </li>
+                <li class="nav-item"><a class="nav-link" th:classappend="${active}=='personal' ? 'active' : ''" href="/personal">个人中心</a></li>
             </ul>
+            <div class="d-flex align-items-center text-white me-3" th:if="${me != null}">
+                <img th:if="${me.avatar != null}" th:src="${me.avatar}" class="rounded-circle me-2"
+                     style="width:28px;height:28px;object-fit:cover;" alt="头像"/>
+                <span class="me-2" th:text="${me.nickname}">用户</span>
+            </div>
             <form th:action="@{/logout}" method="post" class="d-flex">
                 <button type="submit" class="btn btn-outline-light btn-sm">退出登录</button>
             </form>
